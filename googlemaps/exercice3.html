@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Provinces du Canada (GeoJSON)</title>
+    <style>
+      html, body { height: 100%; margin: 0; padding: 0; }
+      #map { height: 100%; }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script>
+      // Chargement moderne : importLibrary() charge seulement les bibliothèques utiles
+      async function initMap() {
+        const { Map } = await google.maps.importLibrary("maps");
+
+        const map = new Map(document.getElementById("map"), {
+          center: { lat: 56, lng: -94 },
+          zoom: 4,
+          mapTypeId: "roadmap"
+        });
+
+        // KmlLayer n'est plus offert depuis la version 3.66 (retrait complet : mai 2027).
+        // Solution : convertir le KML/shapefile en GeoJSON (WGS84) et utiliser la couche Data.
+        // (ogr2ogr -f GeoJSON -t_srs EPSG:4326 provinces_canada.geojson province.kml)
+        map.data.loadGeoJson("provinces_canada.geojson");
+
+        map.data.setStyle({
+          fillColor: "#1F7A8C",
+          fillOpacity: 0.35,
+          strokeColor: "#14213D",
+          strokeWeight: 1.5
+        });
+
+        // Les attributs sont lus côté client : info-bulle au clic
+        const info = new google.maps.InfoWindow();
+        map.data.addListener("click", (e) => {
+          info.setContent("<b>" + e.feature.getProperty("nom") + "</b>");
+          info.setPosition(e.latLng);
+          info.open(map);
+        });
+      }
+    </script>
+    <!-- Clé API : la restreindre aux domaines autorisés (console Google Cloud) -->
+    <script async
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAHuc5zdwpZlhfzzqevAFF7IoG6iJIsmT4&loading=async&callback=initMap&language=fr">
+    </script>
+  </body>
+</html>

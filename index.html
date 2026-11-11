@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GMQ 722 – Cours 7 : exemples de cartographie web</title>
+  <meta name="description" content="Exemples de code du cours GMQ 722 (Université de Sherbrooke) : Google Maps, OpenLayers, Leaflet, MapLibre, PWA et IA générative.">
+  <style>
+    :root {
+      --navy: #14213D; --teal: #1F7A8C; --tealL: #D7ECF0; --gold: #E8A33D; --goldL: #FBEBD0;
+      --ink: #1B263B; --gray: #5C677D; --bg: #F4F7FA; --card: #FFFFFF; --line: #D5DDE5;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --ink: #E6EDF5; --gray: #A9B4C6; --bg: #0F1B33; --card: #17264A; --line: #2A3B63; --tealL: #1C3E52; --goldL: #3F3220; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, "Segoe UI", Calibri, sans-serif; background: var(--bg); color: var(--ink); line-height: 1.5; }
+    header { background: var(--navy); color: #fff; padding: 40px 16px 32px; }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
+    header .wrap { padding: 0; }
+    .kicker { color: var(--gold); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 15px; margin: 0 0 6px; }
+    h1 { font-family: Cambria, Georgia, serif; font-size: clamp(28px, 4.5vw, 42px); margin: 0 0 10px; line-height: 1.15; }
+    header p { margin: 0; color: #C9D6E8; font-size: 18px; max-width: 760px; }
+    nav { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+    nav a { color: #fff; text-decoration: none; border: 1.5px solid var(--teal); border-radius: 999px; padding: 6px 14px; font-size: 15px; }
+    nav a:hover { background: var(--teal); }
+    .notice { background: var(--goldL); border-radius: 10px; padding: 14px 18px; margin: 28px 0 8px; font-size: 16px; }
+    .notice code { background: rgba(0,0,0,.08); padding: 1px 6px; border-radius: 4px; }
+    section { margin: 36px 0; }
+    h2 { font-family: Cambria, Georgia, serif; font-size: 28px; margin: 0 0 4px; }
+    .lead { color: var(--gray); margin: 0 0 18px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+    .card img { width: 100%; aspect-ratio: 2 / 1; object-fit: cover; display: block; background: var(--tealL); }
+    .card .body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+    .card h3 { margin: 0; font-size: 17px; }
+    .card p { margin: 0; color: var(--gray); font-size: 15px; flex: 1; }
+    .tag { align-self: flex-start; font-size: 12px; font-weight: 700; color: var(--teal); background: var(--tealL); border-radius: 999px; padding: 2px 10px; }
+    .tag.new { color: #8A5A10; background: var(--goldL); }
+    .links { display: flex; gap: 8px; margin-top: 6px; }
+    .links a { font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 6px; padding: 6px 12px; }
+    .links a.open { background: var(--teal); color: #fff; }
+    .links a.src { color: var(--teal); border: 1.5px solid var(--teal); }
+    footer { border-top: 1px solid var(--line); color: var(--gray); font-size: 14px; padding: 20px 0 40px; margin-top: 40px; }
+    footer a { color: var(--teal); }
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <p class="kicker">GMQ 722 · Université de Sherbrooke · Automne 2026</p>
+    <h1>Cours 7 — La cartographie web, partie 3</h1>
+    <p>Exemples de code présentés en classe : API Google Maps, OpenLayers 10, Leaflet, MapLibre, applications PWA et page générée avec l'IA générative.</p>
+    <nav id="nav"></nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="notice">
+    Pour travailler sur votre poste, téléchargez le dépôt (bouton <strong>Code › Download ZIP</strong> sur GitHub) et ouvrez les pages avec un serveur local :
+    <code>python -m http.server</code> puis <code>http://localhost:8000</code>. En <code>file://</code>, les GeoJSON et les service workers ne se chargent pas.
+  </div>
+  <div id="sections"></div>
+</main>
+
+<footer>
+  <div class="wrap">
+    Mickaël Germain — Département de géomatique appliquée, FLSH / CARTEL, Université de Sherbrooke.
+    Fonds de carte : © contributeurs <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> ·
+    Stamen / <a href="https://stadiamaps.com/">Stadia Maps</a> · Sentinel-2 cloudless – <a href="https://s2maps.eu">s2maps.eu</a> (EOX, CC BY-NC-SA 4.0) ·
+    <a href="https://tiles.openfreemap.org">OpenFreeMap</a>. Données : RNCan (GéoGratis), Transports Québec.
+  </div>
+</footer>
+
+<script>
+  // Lien « Code source » : déduit de l'adresse GitHub Pages (propriétaire.github.io/dépôt/)
+  const host = location.hostname;
+  const owner = host.endsWith('.github.io') ? host.split('.')[0] : 'geo-projet';
+  const repo = host.endsWith('.github.io') ? (location.pathname.split('/')[1] || 'gmq722-cours7') : 'gmq722-cours7';
+  const SRC = `https://github.com/${owner}/${repo}/blob/main/`;
+
+  const SECTIONS = [
+    { id: 'googlemaps', titre: 'API Google Maps', lead: 'Maps JavaScript API — chargement moderne avec importLibrary().', items: [
+      ['googlemaps/exemple1_g.html', 'Carte simple', 'Gabarit de base : centre et zoom.'],
+      ['googlemaps/exemple2_g.html', 'Sans contrôles', 'disableDefaultUI : tous les contrôles retirés.'],
+      ['googlemaps/exemple3_g.html', 'Choix des contrôles', 'zoomControl et scaleControl.'],
+      ['googlemaps/exemple4_g.html', 'Fond satellite', 'mapTypeId : roadmap, satellite, hybrid, terrain.'],
+      ['googlemaps/exemple5_g.html', 'Marqueur et info-bulle', 'AdvancedMarkerElement (remplace google.maps.Marker).'],
+      ['googlemaps/exercice3.html', 'Exercice 3 : provinces', 'Couche Data + GeoJSON (KmlLayer est retiré).'],
+    ]},
+    { id: 'openlayers', titre: 'API OpenLayers 10.11', lead: 'Les objets Map, View et Layer, les sources de tuiles, WMS, WFS, contrôles et interactions.', items: [
+      ['openlayers/exemple_base1.html', 'Carte de base (OSM)', 'ol.Map, ol.View, ol.layer.Tile.'],
+      ['openlayers/exemple_base1_alternative.html', 'Variante avec variables', 'addLayer() et setView().'],
+      ['openlayers/exemple_base2.html', 'Stamen Toner', 'Source StadiaMaps.'],
+      ['openlayers/exemple_base2_exercice.html', 'Exercice : Stamen Terrain', 'Changer la couche Stadia.'],
+      ['openlayers/exemple_base3.html', 'Imagerie Sentinel-2', 'Source XYZ (remplace Bing Maps).'],
+      ['openlayers/exemple_raster1.html', 'Couche WMS tuilée', 'TileWMS : routes de RNCan.'],
+      ['openlayers/exemple_raster1_exercice.html', 'Exercice : 2 couches WMS', 'Routes + réseau hydrographique.'],
+      ['openlayers/exemple_raster2.html', 'WMS image unique', 'ImageWMS : une seule requête GetMap.'],
+      ['openlayers/exemple_projection1.html', 'Projections', 'ol.proj.transform() : EPSG:4326 → 3857.'],
+      ['openlayers/exemple_control1.html', 'Contrôles désactivés', 'ol.control.defaults.defaults().'],
+      ['openlayers/exemple_control2.html', 'Position de la souris', 'Contrôle MousePosition.'],
+      ['openlayers/exemple_control3.html', 'Barre d\'échelle', 'Contrôle ScaleLine.'],
+      ['openlayers/exemple_interaction1.html', 'Interactions (1)', 'Désactiver shiftDragZoom.'],
+      ['openlayers/exemple_interaction2.html', 'Interactions (2)', 'Désactiver aussi la molette.'],
+      ['openlayers/exemple_interaction3.html', 'Interactions (3)', 'Ajouter DragRotateAndZoom.'],
+      ['openlayers/exemple_vector1.html', 'GeoJSON : provinces', 'ol.layer.Vector.'],
+      ['openlayers/exemple_vector2.html', 'GeoJSON : + aéroports', 'Deux couches vectorielles.'],
+      ['openlayers/exemple_wfs1.html', 'Couche WFS', 'Villages-relais, Transports Québec.', true],
+    ]},
+    { id: 'pwa', titre: 'Applications PWA', lead: 'Manifeste + service worker + HTTPS : une carte installable sur un téléphone.', items: [
+      ['pwa/apps1/index.html', 'apps1 : carte PWA', 'OSM + WMS, mise en cache hors ligne.'],
+      ['pwa/apps2/index.html', 'apps2 : géolocalisation', 'La carte se centre sur votre position.'],
+    ]},
+    { id: 'autres', titre: 'Autres API', lead: 'La même carte avec Leaflet et MapLibre GL JS.', items: [
+      ['autres/leaflet_base.html', 'Leaflet 1.9.4', 'OSM + WMS — attention : [lat, lon].', true],
+      ['autres/maplibre_base.html', 'MapLibre GL JS 5', 'Tuiles vectorielles OpenFreeMap.', true],
+    ]},
+    { id: 'iag', titre: 'IA générative', lead: 'Une page générée à partir d\'une invite, puis relue et testée.', items: [
+      ['iag/villages_relais.html', 'Villages-relais du Québec', 'WFS, liste, recherche, info-bulle, géolocalisation.', true],
+      ['iag/invite.txt', 'L\'invite utilisée', 'Le texte exact donné à l\'assistant.', true, true],
+    ]},
+  ];
+
+  const nav = document.getElementById('nav');
+  const root = document.getElementById('sections');
+  for (const s of SECTIONS) {
+    nav.insertAdjacentHTML('beforeend', `<a href="#${s.id}">${s.titre}</a>`);
+    const cards = s.items.map(([path, titre, desc, nouveau, sansImage]) => {
+      const vignette = 'assets/vignettes/' + path.replace(/\//g, '__').replace(/\.html$/, '') + '.jpg';
+      const img = sansImage ? '' : `<img src="${vignette}" alt="Aperçu : ${titre}" loading="lazy">`;
+      return `<article class="card">${img}<div class="body">
+          ${nouveau ? '<span class="tag new">Nouveau 2026</span>' : ''}
+          <h3>${titre}</h3><p>${desc}</p>
+          <div class="links"><a class="open" href="${path}">Ouvrir</a><a class="src" href="${SRC + path}">Code source</a></div>
+        </div></article>`;
+    }).join('');
+    root.insertAdjacentHTML('beforeend', `<section id="${s.id}"><h2>${s.titre}</h2><p class="lead">${s.lead}</p><div class="grid">${cards}</div></section>`);
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Fond satellite</title>
+    <style>
+      html, body { height: 100%; margin: 0; padding: 0; }
+      #map { height: 100%; }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script>
+      // Chargement moderne : importLibrary() charge seulement les bibliothèques utiles
+      async function initMap() {
+        const { Map } = await google.maps.importLibrary("maps");
+
+        const map = new Map(document.getElementById("map"), {
+          center: { lat: -34.397, lng: 150.644 },
+          zoom: 4,
+          mapTypeId: "satellite"     // roadmap | satellite | hybrid | terrain
+        });
+      }
+    </script>
+    <!-- Clé API : la restreindre aux domaines autorisés (console Google Cloud) -->
+    <script async
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAHuc5zdwpZlhfzzqevAFF7IoG6iJIsmT4&loading=async&callback=initMap&language=fr">
+    </script>
+  </body>
+</html>

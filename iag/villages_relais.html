@@ -1,0 +1,143 @@
+<!doctype html>
+<!--
+  Page générée par IA générative (Claude, Anthropic) – novembre 2026 – à partir de l'invite
+  reproduite dans iag/invite.txt, puis relue et testée (GMQ 722, cours 7).
+-->
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Villages-relais du Québec</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v10.11.0/ol.css">
+  <script src="https://cdn.jsdelivr.net/npm/ol@v10.11.0/dist/ol.js"></script>
+  <style>
+    :root { --navy: #14213D; --teal: #1F7A8C; --gold: #E8A33D; --bg: #F4F7FA; }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; font-family: system-ui, "Segoe UI", sans-serif; color: var(--navy); }
+    .app { display: grid; grid-template-columns: 320px 1fr; grid-template-rows: minmax(0, 1fr); height: 100%; }
+    aside { min-height: 0; background: var(--bg); display: flex; flex-direction: column; border-right: 1px solid #d5dde5; }
+    header { background: var(--navy); color: #fff; padding: 14px 16px; }
+    header h1 { font-size: 20px; margin: 0 0 4px; }
+    header p { margin: 0; font-size: 13px; opacity: .8; }
+    .tools { padding: 12px 16px; display: flex; gap: 8px; }
+    .tools input { flex: 1; padding: 8px 10px; border: 1px solid #b8c4d0; border-radius: 6px; font-size: 15px; }
+    .tools button { background: var(--teal); color: #fff; border: 0; border-radius: 6px; padding: 8px 10px; cursor: pointer; }
+    #compte { padding: 0 16px 6px; font-size: 13px; color: #55657a; }
+    ul { list-style: none; margin: 0; padding: 0 8px 12px; overflow-y: auto; flex: 1; }
+    li { padding: 8px 10px; border-radius: 6px; cursor: pointer; }
+    li:hover, li.actif { background: #dfeaf0; }
+    #map { height: 100%; min-height: 0; }
+    .popup { background: #fff; border-radius: 8px; padding: 10px 14px; box-shadow: 0 4px 14px rgba(0,0,0,.25); min-width: 180px; }
+    .popup b { display: block; margin-bottom: 4px; }
+    .popup a { color: var(--teal); }
+    @media (max-width: 700px) {
+      .app { grid-template-columns: 1fr; grid-template-rows: minmax(0, 45%) minmax(0, 55%); }
+      aside { border-right: 0; border-bottom: 1px solid #d5dde5; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <header>
+      <h1>Villages-relais du Québec</h1>
+      <p>Source : WFS de Transports Québec (couche ms:villagerelais)</p>
+    </header>
+    <div class="tools">
+      <input id="recherche" type="search" placeholder="Rechercher un village…" aria-label="Rechercher">
+      <button id="localiser" title="Me localiser">Me localiser</button>
+    </div>
+    <div id="compte">Chargement…</div>
+    <ul id="liste"></ul>
+  </aside>
+  <div id="map"></div>
+</div>
+<div id="popup" class="popup"></div>
+
+<script>
+  // 1. Service WFS 2.0 : requête GetFeature en GeoJSON, directement en Web Mercator
+  const WFS = 'https://ws.mapserver.transports.gouv.qc.ca/swtq?service=WFS&version=2.0.0' +
+              '&request=GetFeature&typeNames=ms:villagerelais&outputFormat=geojson&srsName=EPSG:3857';
+
+  // 2. Styles : normal et sélectionné
+  const style = (couleur, r) => new ol.style.Style({
+    image: new ol.style.Circle({
+      radius: r,
+      fill: new ol.style.Fill({ color: couleur }),
+      stroke: new ol.style.Stroke({ color: '#14213D', width: 2 })
+    })
+  });
+  const styleNormal = style('#E8A33D', 7);
+  const styleActif = style('#1F7A8C', 11);
+
+  const source = new ol.source.Vector({ url: WFS, format: new ol.format.GeoJSON() });
+  const villages = new ol.layer.Vector({ source, style: styleNormal });
+
+  // 3. Carte : fond OSM + couche WFS + barre d'échelle
+  const map = new ol.Map({
+    target: 'map',
+    layers: [new ol.layer.Tile({ source: new ol.source.OSM() }), villages],
+    view: new ol.View({ center: ol.proj.fromLonLat([-71.5, 47]), zoom: 6 }),
+    controls: ol.control.defaults.defaults().extend([new ol.control.ScaleLine({ units: 'metric' })])
+  });
+
+  // 4. Info-bulle (Overlay)
+  const popupEl = document.getElementById('popup');
+  const popup = new ol.Overlay({ element: popupEl, positioning: 'bottom-center', offset: [0, -14] });
+  map.addOverlay(popup);
+
+  let actif = null;
+  function selectionner(f) {
+    if (actif) actif.setStyle(undefined);
+    actif = f;
+    f.setStyle(styleActif);
+    const nom = f.get('nomcarrout');
+    const lien = f.get('url_carte');
+    popupEl.innerHTML = `<b>${nom}</b>` + (lien ? `<a href="${lien}" target="_blank" rel="noopener">Fiche du village-relais</a>` : '');
+    popup.setPosition(f.getGeometry().getCoordinates());
+    document.querySelectorAll('#liste li').forEach(li => li.classList.toggle('actif', li.dataset.id == f.getId()));
+  }
+
+  map.on('singleclick', (evt) => {
+    const f = map.forEachFeatureAtPixel(evt.pixel, x => x);
+    if (f) selectionner(f); else popup.setPosition(undefined);
+  });
+  map.on('pointermove', (evt) => {
+    map.getTargetElement().style.cursor = map.hasFeatureAtPixel(evt.pixel) ? 'pointer' : '';
+  });
+
+  // 5. Liste latérale triée + recherche
+  const liste = document.getElementById('liste');
+  const compte = document.getElementById('compte');
+  function afficherListe(filtre = '') {
+    const f = filtre.toLowerCase();
+    const items = source.getFeatures()
+      .filter(x => x.get('nomcarrout').toLowerCase().includes(f))
+      .sort((a, b) => a.get('nomcarrout').localeCompare(b.get('nomcarrout'), 'fr'));
+    liste.innerHTML = '';
+    items.forEach(x => {
+      const li = document.createElement('li');
+      li.textContent = x.get('nomcarrout');
+      li.dataset.id = x.getId();
+      li.onclick = () => {
+        map.getView().animate({ center: x.getGeometry().getCoordinates(), zoom: 10, duration: 600 });
+        selectionner(x);
+      };
+      liste.appendChild(li);
+    });
+    compte.textContent = `${items.length} village(s)-relais`;
+  }
+  source.on('featuresloadend', () => afficherListe());
+  source.on('featuresloaderror', () => compte.textContent = 'Erreur de chargement du WFS');
+  document.getElementById('recherche').addEventListener('input', e => afficherListe(e.target.value));
+
+  // 6. Géolocalisation (HTTPS requis)
+  document.getElementById('localiser').onclick = () => {
+    navigator.geolocation.getCurrentPosition(
+      p => map.getView().animate({ center: ol.proj.fromLonLat([p.coords.longitude, p.coords.latitude]), zoom: 11 }),
+      e => alert('Position non disponible : ' + e.message)
+    );
+  };
+</script>
+</body>
+</html>

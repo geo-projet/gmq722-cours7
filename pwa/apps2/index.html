@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#14213D">
+    <title>Carte PWA – géolocalisation</title>
+    <!-- (1) Le manifeste : la page est reconnue comme une application -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v10.11.0/ol.css">
+    <script src="https://cdn.jsdelivr.net/npm/ol@v10.11.0/dist/ol.js"></script>
+    <style>
+      html, body { height: 100%; margin: 0; font-family: system-ui, sans-serif; }
+      h2 { margin: 8px 12px; }
+      .map { height: calc(100% - 48px); width: 100%; }
+    </style>
+    <script>
+      // (2) Le service worker : cache et fonctionnement hors ligne
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("serviceWorker.js")      // chemin RELATIF à la page
+            .then(() => console.log("service worker enregistré"))
+            .catch((err) => console.log("service worker non enregistré", err));
+        });
+      }
+    </script>
+  </head>
+  <body>
+    <h2>Ma position</h2>
+    <div id="map" class="map"></div>
+    <script>
+      // Géolocalisation de l'appareil (HTTPS obligatoire, autorisation de l'utilisateur)
+      function success(pos) {
+        const crd = pos.coords;
+        creationCarte(crd.longitude, crd.latitude);
+      }
+
+      function error(err) {
+        console.warn(`ERREUR(${err.code}) : ${err.message}`);
+        creationCarte(-71.93, 45.38);        // repli : Sherbrooke
+      }
+
+      navigator.geolocation.getCurrentPosition(success, error, { enableHighAccuracy: true, timeout: 10000 });
+
+      function creationCarte(lon, lat) {
+        const view = new ol.View({
+          center: ol.proj.fromLonLat([lon, lat]),
+          zoom: 14
+        });
+        const osmLayer = new ol.layer.Tile({ source: new ol.source.OSM() });
+
+        const layer1 = new ol.layer.Image({
+          source: new ol.source.ImageWMS({
+            url: 'https://cartes.geogratis.gc.ca/wms/roads_fr',
+            params: { LAYERS: 'routes', VERSION: '1.3.0' }
+          })
+        });
+
+        // Position de l'utilisateur
+        const position = new ol.layer.Vector({
+          source: new ol.source.Vector({
+            features: [new ol.Feature(new ol.geom.Point(ol.proj.fromLonLat([lon, lat])))]
+          }),
+          style: new ol.style.Style({
+            image: new ol.style.Circle({
+              radius: 9,
+              fill: new ol.style.Fill({ color: '#E8A33D' }),
+              stroke: new ol.style.Stroke({ color: '#14213D', width: 3 })
+            })
+          })
+        });
+
+        const map = new ol.Map({ target: 'map' });
+        map.addLayer(osmLayer);
+        map.addLayer(layer1);
+        map.addLayer(position);
+        map.setView(view);
+      }
+    </script>
+  </body>
+</html>

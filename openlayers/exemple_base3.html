@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Imagerie Sentinel-2 (EOX)</title>
+    <!-- API OpenLayers 10.11.0 : le style CSS et le code JavaScript (version complète « ol.js ») -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v10.11.0/ol.css">
+    <script src="https://cdn.jsdelivr.net/npm/ol@v10.11.0/dist/ol.js"></script>
+    <style>
+      html, body { height: 100%; margin: 0; font-family: system-ui, sans-serif; }
+      h2 { margin: 8px 12px; }
+      .map { height: calc(100% - 48px); width: 100%; }
+    </style>
+  </head>
+  <body>
+    <h2>Fond imagerie : Sentinel-2 cloudless 2024</h2>
+    <div id="map" class="map"></div>
+    <script>
+      const view = new ol.View({
+        center: ol.proj.fromLonLat([-73.56, 45.50]),
+        zoom: 10
+      });
+      // Remplace Bing Maps (comptes gratuits fermés le 30 juin 2025).
+      // Mosaïque Sentinel-2 sans nuages d'EOX – licence CC BY-NC-SA 4.0 (usage non commercial)
+      const s2Layer = new ol.layer.Tile({
+        source: new ol.source.XYZ({
+          url: 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/{z}/{y}/{x}.jpg',
+          attributions: 'Sentinel-2 cloudless – https://s2maps.eu by EOX IT Services GmbH ' +
+                        '(données Copernicus Sentinel 2024 modifiées)',
+          maxZoom: 15
+        })
+      });
+
+      const map = new ol.Map({ target: 'map' });
+      map.addLayer(s2Layer);
+      map.setView(view);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Couche WFS</title>
+    <!-- API OpenLayers 10.11.0 : le style CSS et le code JavaScript (version complète « ol.js ») -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v10.11.0/ol.css">
+    <script src="https://cdn.jsdelivr.net/npm/ol@v10.11.0/dist/ol.js"></script>
+    <style>
+      html, body { height: 100%; margin: 0; font-family: system-ui, sans-serif; }
+      h2 { margin: 8px 12px; }
+      .map { height: calc(100% - 48px); width: 100%; }
+    </style>
+  </head>
+  <body>
+    <h2>Couche WFS : villages-relais (Transports Québec)</h2>
+    <div id="map" class="map"></div>
+    <script>
+      const view = new ol.View({
+        center: ol.proj.fromLonLat([-71.5, 47]),
+        zoom: 6
+      });
+      const osmLayer = new ol.layer.Tile({
+        source: new ol.source.OSM()
+      });
+      // Requête WFS 2.0 GetFeature : les entités (géométrie + attributs) en GeoJSON
+      const wfsUrl = 'https://ws.mapserver.transports.gouv.qc.ca/swtq?service=WFS&version=2.0.0' +
+                     '&request=GetFeature&typeNames=ms:villagerelais' +
+                     '&outputFormat=geojson&srsName=EPSG:3857';
+
+      const villages = new ol.layer.Vector({
+        source: new ol.source.Vector({ url: wfsUrl, format: new ol.format.GeoJSON() }),
+        style: new ol.style.Style({
+          image: new ol.style.Circle({
+            radius: 7,
+            fill: new ol.style.Fill({ color: '#E8A33D' }),
+            stroke: new ol.style.Stroke({ color: '#14213D', width: 2 })
+          })
+        })
+      });
+
+      const map = new ol.Map({ target: 'map' });
+      map.addLayer(osmLayer);
+      map.addLayer(villages);
+      map.setView(view);
+
+      // Interrogation : les attributs sont disponibles côté client (impossible en WMS)
+      map.on('singleclick', (evt) => {
+        map.forEachFeatureAtPixel(evt.pixel, (f) => {
+          alert(f.get('nomcarrout'));
+          return true;
+        });
+      });
+    </script>
+  </body>
+</html>

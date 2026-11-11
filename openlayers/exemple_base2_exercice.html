@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Exercice – Stamen Terrain</title>
+    <!-- API OpenLayers 10.11.0 : le style CSS et le code JavaScript (version complète « ol.js ») -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v10.11.0/ol.css">
+    <script src="https://cdn.jsdelivr.net/npm/ol@v10.11.0/dist/ol.js"></script>
+    <style>
+      html, body { height: 100%; margin: 0; font-family: system-ui, sans-serif; }
+      h2 { margin: 8px 12px; }
+      .map { height: calc(100% - 48px); width: 100%; }
+    </style>
+  </head>
+  <body>
+    <h2>Exercice : fond Stamen Terrain</h2>
+    <div id="map" class="map"></div>
+    <script>
+      const view = new ol.View({
+        center: ol.proj.fromLonLat([-73.56, 45.50]),
+        zoom: 10
+      });
+      const baseLayer = new ol.layer.Tile({
+        source: new ol.source.StadiaMaps({ layer: 'stamen_terrain' })
+      });
+
+      const map = new ol.Map({ target: 'map' });
+      map.addLayer(baseLayer);
+      map.setView(view);
+    </script>
+  </body>
+</html>

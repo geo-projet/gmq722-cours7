@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Marqueur et info-bulle</title>
+    <style>
+      html, body { height: 100%; margin: 0; padding: 0; }
+      #map { height: 100%; }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script>
+      // Chargement moderne : importLibrary() charge seulement les bibliothèques utiles
+      async function initMap() {
+        const { Map, InfoWindow } = await google.maps.importLibrary("maps");
+        // google.maps.Marker est obsolète depuis février 2024 : AdvancedMarkerElement
+        const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
+
+        const position = { lat: -25.363, lng: 131.044 };
+        const map = new Map(document.getElementById("map"), {
+          zoom: 4,
+          center: position,
+          mapId: "DEMO_MAP_ID"       // obligatoire pour les marqueurs avancés
+        });
+
+        const infowindow = new InfoWindow({ content: "Ceci est du texte" });
+
+        const marker = new AdvancedMarkerElement({
+          map: map,
+          position: position,
+          title: "Titre test",
+          gmpClickable: true
+        });
+
+        marker.addEventListener("gmp-click", () => {
+          infowindow.open({ map: map, anchor: marker });
+        });
+      }
+    </script>
+    <!-- Clé API : la restreindre aux domaines autorisés (console Google Cloud) -->
+    <script async
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAHuc5zdwpZlhfzzqevAFF7IoG6iJIsmT4&loading=async&callback=initMap&language=fr">
+    </script>
+  </body>
+</html>

@@ -1,0 +1,13 @@
+Invite (prompt) utilisée pour générer villages_relais.html – GMQ 722, cours 7
+
+Rôle : tu es développeur·se en cartographie web.
+Tâche : crée une page HTML autonome (un seul fichier) avec OpenLayers 10.11
+(CDN jsDelivr, version complète ol.js) qui affiche les villages-relais du Québec.
+Données : service WFS 2.0 de Transports Québec
+  https://ws.mapserver.transports.gouv.qc.ca/swtq
+  couche ms:villagerelais, sortie GeoJSON, srsName=EPSG:3857
+  (attribut du nom : nomcarrout ; lien : url_carte).
+Fonctions : fond OpenStreetMap ; liste latérale triée par nom avec champ de recherche ;
+info-bulle au clic (nom + lien) ; bouton « Me localiser » ; barre d'échelle métrique.
+Contraintes : interface en français, adaptée au mobile, palette sobre (bleu marine / sarcelle / or),
+code commenté par étapes, aucune clé API.
